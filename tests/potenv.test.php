@@ -8,7 +8,12 @@ use function \pest\test;
 use function \pest\expect;
 
 
-// Set so one of the variables already exists
+// Create a .env file with some variables
+file_put_contents(__DIR__."/.env", "MYVAR1=10\nMYVAR2=helloworld\nMYVAR3=-1\n\n");
+register_shutdown_function("unlink", __DIR__."/.env");
+
+
+// Initialize tests and set so one of the variables already exists
 function init_test()
 {
     $vars = ['MYVAR1', 'MYVAR2', 'MYVAR3'];
@@ -25,9 +30,6 @@ function init_test()
     // We do not set an initial value in putenv/getenv environment
     //putenv('MYVAR3=-8');
 }
-
-file_put_contents(__DIR__."/.env", "MYVAR1=10\nMYVAR2=helloworld\nMYVAR3=-1\n\n");
-register_shutdown_function("unlink", __DIR__."/.env");
 
 
 
@@ -75,7 +77,7 @@ test("dotenv() reads variables", function() {
     expect($vars)->not()->toHaveKey('MYVARXYZ');
 });
 
-test("store_dotenv() stores variables, not overwriting", function() {
+test("store_dotenv() stores variables in \$_ENV and \$_SERVER, not overwriting", function() {
     init_test();
 
     $vars = dotenv(__DIR__."/.env");
@@ -117,7 +119,7 @@ test("store_dotenv() stores variables, not overwriting", function() {
 });
 
 
-test("store_dotenv() stores variables, overwriting = true", function() {
+test("store_dotenv() stores variables in \$_ENV and \$_SERVER, overwriting = true", function() {
     init_test();
 
     $vars = dotenv(__DIR__."/.env");
@@ -139,12 +141,15 @@ test("store_dotenv() stores variables, overwriting = true", function() {
 test("store_dotenv() stores in putenv/getenv, not overwriting", function() {
     init_test();
 
+    // Note! getenv not initalized with MYVAR3
+    expect(getenv('MYVAR3'))->toBeEqual(false);  
+
     $vars = dotenv(__DIR__."/.env");
 
     $overwrite = false;
     store_dotenv($vars, DOTENV_STORE_PUTENV, $overwrite);
 
-    // $_ENV and $_SERVER should only have MYVAR3
+    // $_ENV and $_SERVER should only have MYVAR3 from init
     expect($_ENV)->not()->toHaveKey('MYVAR1');
     expect($_ENV)->not()->toHaveKey('MYVAR2');
     expect($_ENV)->toHaveKey('MYVAR3');
