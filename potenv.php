@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * Read a dotenv (.env) file/string which has env-variables on each row.
+ * @param mixed $envfile A filename or a string of content from a .env file.
+ * @param mixed $line_sep A separator for each variable, default is newline.
+ * @return mixed An assoc array of variables as key and string values.  
+ */
 function dotenv($envfile = ".env", $line_sep = "\n")
 {
 	$contents = "$envfile";
@@ -21,12 +27,40 @@ function dotenv($envfile = ".env", $line_sep = "\n")
 	return $map;
 }
 
-define("DOTENV_STORE_ENV", 1);
-define("DOTENV_STORE_SERVER", 2);
-define("DOTENV_STORE_PUTENV", 4);
+/**
+ * Store dotenv into $_ENV
+ */
+const DOTENV_STORE_ENV = 1;
 
-define("DOTENV_STORE_ALL", 7);
+/**
+ * Store dotenv into $_SERVER
+ */
+const DOTENV_STORE_SERVER = 2;
 
+/**
+ * Store dotenv into putenv/getenv
+ */
+const DOTENV_STORE_PUTENV = 4;
+
+/**
+ * Store dotenv into all stores: $_ENV, $_SERVER, putenv/getenv
+ */
+const DOTENV_STORE_ALL = DOTENV_STORE_ENV | DOTENV_STORE_SERVER | DOTENV_STORE_PUTENV;
+
+
+/**
+ * Store a variable map (from call to dotenv()) into one or several environments.
+ * Default is the $_ENV.
+ * @param mixed $dotenv The variable map from a call to dotenv().
+ * @param mixed $store A bit mask to define which stores to save the variables into. 
+ * Use bitwise or of DOTENV_STORE_* 
+ * DOTENV_STORE_ENV - store in $_ENV (default)
+ * DOTENV_STORE_SERVER - store in $_SERVER
+ * DOTENV_STORE_PUTENV - store in putenv/getenv 
+ * DOTENV_STORE_ALL - store in all of the above
+ * @param bool $overwrite Set to true to overwrite any existing variables. Default is false.
+ * @return void
+ */
 function store_dotenv($dotenv, $store=DOTENV_STORE_ENV, $overwrite=false)
 {
 	foreach($dotenv as $key => $value) {
@@ -42,6 +76,19 @@ function store_dotenv($dotenv, $store=DOTENV_STORE_ENV, $overwrite=false)
 	}
 }
 
+/**
+ * Load a .env file and store in $_ENV. Does not overwrite existing variables.
+ * This is equal to: 
+ * 
+ * ```
+ * <?php
+ * store_dotenv(dotenv(".env", "\n"), DOTENV_STORE_ENV, false);
+ * ?>
+ * ```
+ * 
+ * @param mixed $envfile The path to .env file.
+ * @return void
+ */
 function usedotenv($envfile = ".env")
 {
 	store_dotenv(dotenv($envfile), DOTENV_STORE_ENV, false);
